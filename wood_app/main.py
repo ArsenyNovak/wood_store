@@ -1,11 +1,13 @@
 import logging
 from contextlib import asynccontextmanager
 
+from wood_app.pages.router import router_pages
 from wood_app.bot.create_bot import bot, dp, stop_bot, start_bot
 from wood_app.bot.user_router import user_router
 from wood_app.config import settings
 from aiogram.types import Update
 from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -29,6 +31,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+app.mount('/static', StaticFiles(directory='wood_app/static'), name='static')
+
+app.include_router(router_pages)
 
 @app.post("/webhook")
 async def webhook(request: Request) -> None:

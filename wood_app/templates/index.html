@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ title }}
+{% endblock %}
+
+{% block content %}
+<header class="site-header">
+    <div class="container header-inner">
+      <div class="brand">
+        <img src="/static/image/logo.jpg" alt="warmth_of_wood" class="logo-img">
+      </div>
+      <nav class="controls" aria-label="Фильтры">
+        <form method="get">
+        <label for="category" class="visually-hidden">Категория</label>
+        <select id="category" name="category" class="select" onchange="this.form.submit()">
+          <option value="all" {% if selected_category == "all" %}selected{% endif %}>Все изделия</option>
+          {% for category in categories %}
+          <option value="{{ category.category_id }}" {% if selected_category == category.category_id|string %}selected{% endif %}>{{ category.title }}</option>
+          {% endfor %}
+        </select>
+        </form>
+        <a href="cart.html" class="cart-link" aria-label="Перейти в корзину">
+          Корзина <span id="cartCount" class="badge">0</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h2>Натуральные изделия из дерева и не только</h2>
+      <p class="lead">Свечи в дереве, вазы, фигурки, игрушки ... — ручная работа.</p>
+    </section>
+
+    <section id="products" class="grid" aria-live="polite">
+    {% if products %}
+      {% for product in products %}
+      <article class="card">
+        <a href="#" class="card-link" aria-label="Открыть {{ product.title }}">
+<!--            <img src="{{ product.img }}" alt="{{ product.title }}">-->
+            <div class="card-body">
+                <h3 class="card-title">{{ product.title }}</h3>
+                <div class="card-meta"><span class="badge">{{ product.category }}</span></div>
+                <div class="price">{{ product.price }}</div>
+            </div>
+        </a>
+<!--        <div style="padding:10px;border-top:1px solid var(&#45;&#45;card-border);display:flex;justify-content:flex-end;">-->
+<!--            <button class="btn-cart" data-id="{{ product.id }}">В корзину</button>-->
+<!--        </div>-->
+      </article>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state" id="emptyState">
+        <p>Товаров не найдено.</p>
+      </div>
+    {% endif %}
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <small>© <span id="year"></span>warmth_of_wood</small>
+    </div>
+  </footer>
+
+</body>
+{% endblock %}
+
+{% block scripts %}
+  <script type="module" src="/static/js/index.js"></script>
+{% endblock %}
+
+
