@@ -55,7 +55,6 @@ class BaseDAO:
             result = await session.execute(query)
             return result.scalars().all()
 
-
     @classmethod
     async def add(cls, **values):
         """
@@ -71,12 +70,8 @@ class BaseDAO:
             async with session.begin():
                 new_instance = cls.model(**values)
                 session.add(new_instance)
-                try:
-                    await session.flush()
-                    new_id = new_instance.product_id
-                    await session.commit()
-                    await session.refresh(new_instance)
-                except SQLAlchemyError as e:
-                    await session.rollback()
-                    raise e
-                return new_instance, new_id
+            # Тут сессия commit сделала автоматически
+            await session.refresh(new_instance)  # если нужно получить актуальные значения из БД
+            new_id = new_instance.product_id
+            return new_instance, new_id
+

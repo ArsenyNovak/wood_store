@@ -16,7 +16,7 @@
 <main class="container">
     <section class="card" style="padding:18px;max-width:720px;margin:24px auto;">
       <h2 style="margin-top:0;">Добавить новое изделие</h2>
-        <form method="POST" action="{{ url_for('create_product') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('create_product') }}" >
             <div style="display:flex;flex-direction:column;gap:10px;">
                 <div>
                     <label for="title">Название:</label>

@@ -1,11 +1,14 @@
+import base64
 import os
-from typing import List
+import uuid
 
-from fastapi import APIRouter, Form, File, UploadFile
+from fastapi import APIRouter
 from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
+from wood_app.api.forms import ProductCreate
+from wood_app.bot.utils import cyrillicToLatin
 from wood_app.bot.kbs import main_keyboard
 from wood_app.config import settings
 from wood_app.bot.create_bot import bot
@@ -42,51 +45,34 @@ async def create_product(request: Request):
     })
 
 
-@router_pages.post("/upload_files", response_class=JSONResponse)
-async def upload_files(files: List[UploadFile] = File(...)):
-    base_upload_dir = "static/image/products"
-    os.makedirs(base_upload_dir, exist_ok=True)
-    print(files)
-    saved_files = []
-
-    for file in files:
-        file_path = os.path.join(base_upload_dir, file.filename)
-        contents = await file.read()
-        with open(file_path, "wb") as f:
-            f.write(contents)
-        saved_files.append({"name": file.filename, "path": file_path})
-    print(saved_files)
-    return {"files": saved_files}
-
-
 @router_pages.post("/create_products", response_class=JSONResponse)
-async def create_product(
-        request: Request,
-):
-    data = await request.json()
-
-    title = data.get("title")
-    describe = data.get("describe")
-    count = int(data.get("count", 0))
-    price = float(data.get("price", 0))
-    category_id = int(data.get("category_id"))
-    images = data.get("images", [])  # список имен или путей загрузленных файлов
+async def create_product(data: ProductCreate):
+    new_catalog = cyrillicToLatin(data.title)
+    base_upload_dir = f"wood_app/static/image/products/{new_catalog}"
+    os.makedirs(base_upload_dir, exist_ok=True)
 
     new_product, new_id = await ProductDAO.add(
-        title=title,
-        describe=describe,
-        count=count,
-        price=price,
-        category_id=category_id
+        title=data.title,
+        describe=data.describe,
+        count=data.count,
+        price=data.price,
+        category_id=data.category_id
     )
 
-    # Связываем загруженные файлы с продуктом
-    for image_info in images:
-        # используем image_info как имя файла или путь, зависит как передаёте из JS
-        url_path = os.path.join("static/image/products", image_info)
+    saved_files_names = []
+    for file in data.images:
+        # Уберём префикс "data:image/png;base64," если есть
+        header_removed = file.content.split(",")[1] if "," in file.content else file.content
+        file_bytes = base64.b64decode(header_removed)
+        ext = file.name.split(".")[-1]
+        filename = f"{uuid.uuid4()}.{ext}"
+        file_path = os.path.join(base_upload_dir, filename)
+        with open(file_path, "wb") as f:
+            f.write(file_bytes)
+        saved_files_names.append(filename)
         await ProductImageDAO.add(
             product_id=new_id,
-            url=url_path
+            url=file_path
         )
 
     kb = main_keyboard(user_id=settings.ADMIN_ID, first_name="ARSENI")
