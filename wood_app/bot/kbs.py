@@ -16,6 +16,14 @@ def main_keyboard(user_id: int, first_name: str) -> ReplyKeyboardMarkup:
     kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)
 
+def admin_keyboard(user_id: int) -> InlineKeyboardMarkup:
+    url_applications = f"{settings.BASE_SITE}/applications/create_products"
+    kb = InlineKeyboardBuilder()
+    kb.button(text="🏠 На главную", callback_data="back_home")
+    kb.button(text="➕ Добавить изделие", web_app=WebAppInfo(url=url_applications))
+    kb.adjust(1)
+    return kb.as_markup()
+
 
 def back_keyboard() -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardBuilder()

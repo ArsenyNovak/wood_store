@@ -38,7 +38,7 @@
       {% for product in products %}
       <article class="card">
         <a href="#" class="card-link" aria-label="Открыть {{ product.title }}">
-<!--            <img src="{{ product.img }}" alt="{{ product.title }}">-->
+            <img src="{{ product.images[0].url }}" alt="{{ product.title }}">
             <div class="card-body">
                 <h3 class="card-title">{{ product.title }}</h3>
                 <div class="card-meta"><span class="badge">{{ product.category }}</span></div>
@@ -60,11 +60,9 @@
 
   <footer class="site-footer">
     <div class="container">
-      <small>© <span id="year"></span>warmth_of_wood</small>
+      <small>© <span id="year"></span>  warmth_of_wood</small>
     </div>
   </footer>
-
-</body>
 {% endblock %}
 
 {% block scripts %}

@@ -10,7 +10,6 @@ class Category(Base):
     category_id: Mapped[int] = mapped_column(Integer, primary_key=True,
                                            autoincrement=True)
     title : Mapped[str] = mapped_column(String, nullable=False)
-    image_url: Mapped[str] = mapped_column(String)
     products: Mapped[list["Product"]] = relationship("Product", back_populates="category")
 
 
