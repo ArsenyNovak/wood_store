@@ -14,5 +14,7 @@ COPY . /app
 
 EXPOSE 8000
 
+# alembic revision --autogenerate -m "Initial revision"
+# alembic upgrade head
 
-CMD alembic revision --autogenerate -m "Initial revision" || echo "Revision already exists" && alembic upgrade head && uvicorn wood_app.main:app --host 0.0.0.0 --port 8000
+CMD uvicorn wood_app.main:app --host 0.0.0.0 --port 8000 --reload

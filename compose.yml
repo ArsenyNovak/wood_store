@@ -1,12 +1,12 @@
 services:
 
-  fastapi_app:
+  wood_fastapi:
     build: .
-    image: fastapi_app
-    container_name: fastapi_app
+    image: wood_fastapi
+    container_name: wood_fastapi
     restart: always
     links:
-      - "postgres:dbps"
+      - "postgres_wood:dbps"
     networks:
       - dbnet
     volumes:
@@ -14,14 +14,14 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - postgres
+      - postgres_wood
 
 
-  postgres:
+  postgres_wood:
     image: postgres:17-alpine
-    container_name: psgr
+    container_name: psgr_wood
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data_wood:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
@@ -36,4 +36,4 @@ networks:
 
 
 volumes:
-  postgres-data:
+  postgres-data_wood:

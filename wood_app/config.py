@@ -22,7 +22,7 @@ class Settings(BaseSettings):
 
     def get_webhook_url(self) -> str:
         """Возвращает URL вебхука с кодированием специальных символов."""
-        return f"{self.BASE_SITE}/webhook"
+        return f"{self.BASE_SITE}/wood/webhook"
 
 
 settings = Settings()

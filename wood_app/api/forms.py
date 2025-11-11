@@ -13,4 +13,4 @@ class ProductCreate(BaseModel):
     count: int = 0
     price: float = 0.0
     category_id: int
-    files: Optional[List[ImageBase64]] = []
+    images: Optional[List[ImageBase64]] = []

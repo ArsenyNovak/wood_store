@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Отправляем JSON
     try {
-      const response = await fetch('/applications/create_products', {
+      const response = await fetch('wood/applications/create_products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(jsonObject)

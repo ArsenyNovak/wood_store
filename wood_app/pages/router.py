@@ -22,9 +22,9 @@ templates = Jinja2Templates(directory='wood_app/templates')
 async def read_root(request: Request, category: str = "all"):
     categories = await CategoryDAO.find_all()
     if category != "all":
-        products = await ProductDAO.find_all(category_id=int(category))
+        products = await ProductDAO.find_all_with_images(category_id=int(category))
     else:
-        products = await ProductDAO.find_all()
+        products = await ProductDAO.find_all_with_images()
     return templates.TemplateResponse("index.html", {
         "request": request,
         "title": "Kpama warmth_of_wood",
@@ -70,6 +70,7 @@ async def create_product(data: ProductCreate):
         with open(file_path, "wb") as f:
             f.write(file_bytes)
         saved_files_names.append(filename)
+        file_path = file_path.replace("wood_app", "wood", 1)
         await ProductImageDAO.add(
             product_id=new_id,
             url=file_path

@@ -8,7 +8,7 @@
 <header class="site-header">
     <div class="container header-inner">
       <div class="brand">
-        <img src="/static/image/logo.jpg" alt="warmth_of_wood" class="logo-img">
+        <img src="/wood/static/image/wow.jpg" alt="warmth_of_wood" class="logo-img">
       </div>
       <nav class="controls" aria-label="Фильтры">
         <form method="get">
@@ -38,11 +38,11 @@
       {% for product in products %}
       <article class="card">
         <a href="#" class="card-link" aria-label="Открыть {{ product.title }}">
-            <img src="{{ product.images[0].url }}" alt="{{ product.title }}">
+            <img src="/{{ product.images[0].url }}" alt="{{ product.title }}">
             <div class="card-body">
                 <h3 class="card-title">{{ product.title }}</h3>
-                <div class="card-meta"><span class="badge">{{ product.category }}</span></div>
-                <div class="price">{{ product.price }}</div>
+                <div class="card-meta"><span class="badge">{{ product.category.title }}</span></div>
+                <div class="price">{{ product.price }} р.</div>
             </div>
         </a>
 <!--        <div style="padding:10px;border-top:1px solid var(&#45;&#45;card-border);display:flex;justify-content:flex-end;">-->
@@ -66,7 +66,7 @@
 {% endblock %}
 
 {% block scripts %}
-  <script type="module" src="/static/js/index.js"></script>
+  <script type="module" src="/wood/static/js/index.js"></script>
 {% endblock %}
 
 

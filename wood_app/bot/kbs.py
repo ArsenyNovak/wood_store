@@ -6,8 +6,8 @@ from wood_app.config import settings
 
 def main_keyboard(user_id: int, first_name: str) -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardBuilder()
-    url_applications = f"{settings.BASE_SITE}/applications?user_id={user_id}"
-    url_add_application = f'{settings.BASE_SITE}/form?user_id={user_id}&first_name={first_name}'
+    url_applications = f"{settings.BASE_SITE}/wood/applications/?user_id={user_id}"
+    url_add_application = f'{settings.BASE_SITE}/wood/form?user_id={user_id}&first_name={first_name}'
     kb.button(text="Каталог", web_app=WebAppInfo(url=url_applications))
     # kb.button(text="📝 Добавить идею", web_app=WebAppInfo(url=url_add_application))
     kb.button(text="ℹ️ О проекте")
@@ -17,7 +17,7 @@ def main_keyboard(user_id: int, first_name: str) -> ReplyKeyboardMarkup:
     return kb.as_markup(resize_keyboard=True)
 
 def admin_keyboard(user_id: int) -> InlineKeyboardMarkup:
-    url_applications = f"{settings.BASE_SITE}/applications/create_products"
+    url_applications = f"{settings.BASE_SITE}/wood/applications/create_products"
     kb = InlineKeyboardBuilder()
     kb.button(text="🏠 На главную", callback_data="back_home")
     kb.button(text="➕ Добавить изделие", web_app=WebAppInfo(url=url_applications))
