@@ -2,14 +2,48 @@ const tg = window.Telegram.WebApp;
 const yearSpan = document.getElementById('year');
 
 
+const input = document.getElementById('images');
+const fileCount = document.getElementById('imagesCount');
+
+input.addEventListener('change', () => {
+  const count = input.files.length;
+  if (count === 0) {
+    fileCount.textContent = '';
+  } else {
+    fileCount.textContent = `Выбрано ${count} фото`;
+  }
+});
+
+
 yearSpan.textContent = new Date().getFullYear();
 
-function fileToBase64(file) {
+function compressImage(file, maxWidth = 1000, quality = 0.9) {
   return new Promise((resolve, reject) => {
+    const img = new Image();
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
+
+    reader.onload = e => {
+      img.src = e.target.result;
+    };
+
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      // Масштабируем изображение, сохраняя пропорции
+      const scale = Math.min(maxWidth / img.width, 1);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // Получаем сжатое изображение в base64 с заданным качеством (для JPEG)
+      const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+      resolve(compressedBase64);
+    };
+
     reader.onerror = error => reject(error);
-    reader.readAsDataURL(file); // вернёт строку с префиксом data:[тип];base64,[данные]
+    reader.readAsDataURL(file);
   });
 }
 
@@ -35,8 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
     jsonObject.images = [];
 
     for (let file of files) {
-      const base64File = await fileToBase64(file);
-      jsonObject.images.push({ name: file.name, content: base64File });
+      const compressedBase64 = await compressImage(file, 800, 0.7);
+      jsonObject.images.push({ name: file.name, content: compressedBase64 });
     }
 
     // Отправляем JSON

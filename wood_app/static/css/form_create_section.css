@@ -1,0 +1,68 @@
+.form-wrapper {
+  gap: 20px;
+  color: var(--primary-dark);
+  padding: 20px;
+
+}
+
+.add_form {
+  align-items: flex-start;
+  gap: 20px;
+  max-width: 600px;
+  min-width: 300px;
+  font-size: 12px;
+}
+
+.form_field {
+  border:1px solid var(--primary-dark);
+  border-radius: 4px;
+  background:var(--primary-light);
+  color: var(--primary-dark);
+  flex: 1;
+}
+
+.form-fild__label {
+  display: inline-block;
+  width: 80px;       /* Фиксированная ширина колонок для label */
+  text-align: left;  /* Выравнивание текста меток по правому краю */
+  margin-right: 10px; /* Отступ между label и input */
+}
+
+.field__number {
+  width: 70px;
+}
+
+.field__text {
+  width: 180px;
+}
+
+.field__textarea {
+  width: 180px;
+  height: 150px;
+}
+
+.form-file-button {
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+  padding:4px 12px;
+  border:1px solid var(--primary-dark);
+  border-radius:8px;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.form-file-button:hover {
+  background-color: var(--primary-dark);
+  color: var(--primary-light);
+}
+
+.btn_add {
+  padding:4px 12px;
+  border:1px solid var(--primary-dark);
+  border-radius:8px;
+  font-size: 14px;
+  background-color: var(--primary-dark);
+  color: var(--primary-light);
+  cursor: pointer;
+}
+

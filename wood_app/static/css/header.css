@@ -75,7 +75,11 @@
 }
 
 .select, .search{
-  padding:10px 12px;
+  width: 170px; /* фиксированная ширина */
+  overflow: hidden; /* скрыть выходящий за границы текст */
+  text-overflow: ellipsis; /* при обрезке текста добавить троеточие */
+  white-space: nowrap;
+  padding:10px 8px;
   border:1px solid var(--primary-light);
   border-radius:8px;
   background:var(--primary-dark);
