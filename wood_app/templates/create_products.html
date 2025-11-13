@@ -7,9 +7,9 @@
 {% block content %}
 <header class="site-header">
     <div class="container header-inner">
-      <div class="brand">
-        <img src="/wood/static/image/wow.jpg" alt="warmth_of_wood" class="logo-img">
-      </div>
+      <a class="brand" href="{{ url_for('read_root') }}">
+          <span class="logo-img"></span>
+      </a>
     </div>
 </header>
 
@@ -54,11 +54,6 @@
     </section>
 </main>
 
-<footer class="site-footer">
-<div class="container">
-  <small>© <span id="year"></span>  warmth_of_wood</small>
-</div>
-</footer>
 {% endblock %}
 
 {% block scripts %}

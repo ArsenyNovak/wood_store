@@ -21,17 +21,21 @@ templates = Jinja2Templates(directory='wood_app/templates')
 @router_pages.get("/", response_class=HTMLResponse)
 async def read_root(request: Request, category: str = "all"):
     categories = await CategoryDAO.find_all()
-    if category != "all":
-        products = await ProductDAO.find_all_with_images(category_id=int(category))
-    else:
-        products = await ProductDAO.find_all_with_images()
     return templates.TemplateResponse("index.html", {
         "request": request,
         "title": "Kpama warmth_of_wood",
         "categories": categories,
-        "products": products,
         "selected_category": category,
     })
+
+
+@router_pages.get("/api/products", response_class=JSONResponse)
+async def get_products(category: str = "all"):
+    if category != "all":
+        products = await ProductDAO.find_all_with_images(category_id=int(category))
+    else:
+        products = await ProductDAO.find_all_with_images()
+    return {"products": products}
 
 
 @router_pages.get("/create_products", response_class=HTMLResponse)

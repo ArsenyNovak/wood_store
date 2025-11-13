@@ -1,0 +1,39 @@
+.site-footer{
+  background: var(--primary-dark, transparent);
+  border:1px solid var(--primary-dark);
+  border-radius:16px 16px 0px 0px;
+}
+
+.footer-inner{
+  display: flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.social{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.img_tree_left{
+  height: 48px;
+  width: 48px;
+  background-image: url("/wood/static/image/tree_left_footer.jpg");
+  background-size: cover;
+}
+
+.img_tree_right{
+  height: 48px;
+  width: 48px;
+  background-image: url("/wood/static/image/tree_right_footer.jpg");
+  background-size: cover;
+}
+
+.icons__instagram {
+    display: inline-block;
+    height: 24px;
+    width: 24px;
+}

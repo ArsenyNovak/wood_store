@@ -7,62 +7,68 @@
 {% block content %}
 <header class="site-header">
     <div class="container header-inner">
-      <div class="brand">
-        <img src="/wood/static/image/wow.jpg" alt="warmth_of_wood" class="logo-img">
-      </div>
+      <a class="brand" href="{{ url_for('read_root') }}">
+          <span class="logo-img"></span>
+      </a>
       <nav class="controls" aria-label="Фильтры">
         <form method="get">
-        <label for="category" class="visually-hidden">Категория</label>
-        <select id="category" name="category" class="select" onchange="this.form.submit()">
-          <option value="all" {% if selected_category == "all" %}selected{% endif %}>Все изделия</option>
-          {% for category in categories %}
-          <option value="{{ category.category_id }}" {% if selected_category == category.category_id|string %}selected{% endif %}>{{ category.title }}</option>
-          {% endfor %}
-        </select>
+            <label for="category" class="visually-hidden">Категория</label>
+            <select id="category" name="category" class="select" onchange="this.form.submit()">
+              <option value="all" {% if selected_category == "all" %}selected{% endif %}>Все изделия</option>
+              {% for category in categories %}
+              <option value="{{ category.category_id }}" {% if selected_category == category.category_id|string %}selected{% endif %}>{{ category.title }}</option>
+              {% endfor %}
+            </select>
         </form>
         <a href="cart.html" class="cart-link" aria-label="Перейти в корзину">
-          Корзина <span id="cartCount" class="badge">0</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 6H21L20 12H8L6 6Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="currentColor"/>
+            <path d="M7 18a2 2 0 100 4 2 2 0 000-4zM17 18a2 2 0 100 4 2 2 0 000-4z" fill="currentColor"/>
+          </svg>
+          <span class="visually-hidden">Корзина</span>
+          <span id="cartCount" class="badge">0</span>
         </a>
       </nav>
     </div>
-  </header>
+</header>
 
   <main class="container">
-    <section class="hero">
-      <h2>Натуральные изделия из дерева и не только</h2>
-      <p class="lead">Свечи в дереве, вазы, фигурки, игрушки ... — ручная работа.</p>
+<!--    <section class="hero">-->
+<!--      <p>Тепло дерева — в каждом подарке!-->
+<!--Вазы, свечи, игрушки из натурального дерева наполнят дом ароматом уюта и новогоднего волшебства.</p>-->
+<!--        <span class="caption static-white-color">The New Year is Coming Soon...</span>-->
+<!--        <div class="timer">-->
+<!--            <div class="timer_digits flex_clmn_center">-->
+<!--                <h4 class="center_text timer__days">47</h4>-->
+<!--                <h4 class="center_text">days</h4>-->
+<!--            </div >-->
+<!--            <span class="separator">|</span>-->
+<!--            <div class="timer_digits flex_clmn_center">-->
+<!--                <h4 class="center_text timer__hours">5</h4>-->
+<!--                <h4 class="center_text">hours</h4>-->
+<!--            </div>-->
+<!--            <span class="separator">|</span>-->
+<!--            <div class="timer_digits flex_clmn_center">-->
+<!--                <h4 class="center_text timer__minutes">34</h4>-->
+<!--                <h4 class="center_text">minutes</h4>-->
+<!--            </div>-->
+<!--            <span class="separator">|</span>-->
+<!--            <div class="timer_digits flex_clmn_center ">-->
+<!--                <h4 class="center_text timer__seconds">12</h4>-->
+<!--                <h4 class="center_text">seconds</h4>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--      <p class="lead"></p>-->
+<!--    </section>-->
+
+    <section   aria-live="polite">
+      <div id="products" class="layout"></div>
+      <div id="no-products-message" class="no_products">Товары не найдены</div>
+      <div class="pagination" id="pagination"></div>
     </section>
 
-    <section id="products" class="grid" aria-live="polite">
-    {% if products %}
-      {% for product in products %}
-      <article class="card">
-        <a href="#" class="card-link" aria-label="Открыть {{ product.title }}">
-            <img src="/{{ product.images[0].url }}" alt="{{ product.title }}">
-            <div class="card-body">
-                <h3 class="card-title">{{ product.title }}</h3>
-                <div class="card-meta"><span class="badge">{{ product.category.title }}</span></div>
-                <div class="price">{{ product.price }} р.</div>
-            </div>
-        </a>
-<!--        <div style="padding:10px;border-top:1px solid var(&#45;&#45;card-border);display:flex;justify-content:flex-end;">-->
-<!--            <button class="btn-cart" data-id="{{ product.id }}">В корзину</button>-->
-<!--        </div>-->
-      </article>
-      {% endfor %}
-    {% else %}
-      <div class="empty-state" id="emptyState">
-        <p>Товаров не найдено.</p>
-      </div>
-    {% endif %}
-    </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <small>© <span id="year"></span>  warmth_of_wood</small>
-    </div>
-  </footer>
 {% endblock %}
 
 {% block scripts %}

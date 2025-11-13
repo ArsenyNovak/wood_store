@@ -1,0 +1,88 @@
+.site-header{
+  background: var(--primary-dark, transparent);
+  border:1px solid var(--primary-dark);
+  border-radius:0px 0px 16px 16px;
+}
+
+.header-inner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.brand{
+  display:inline-flex;
+  align-items:center;
+  gap:12px;
+  text-decoration:none;
+  color:inherit;
+}
+
+.logo-img{
+  width: 80px;
+  height: 40px;
+  border-radius: 8px;
+  background-image: url("/wood/static/image/logo.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.logo{
+  margin:0;
+  font-weight:700;
+  letter-spacing:0.4px;
+}
+
+.controls{
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+
+.visually-hidden{
+  position:absolute!important;
+  height:1px;width:1px;
+  overflow:hidden;
+  clip:rect(1px,1px,1px,1px);
+  white-space:nowrap;
+}
+
+.cart-link{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:9px 0px 9px 6px;
+  border:1px solid var(--primary-light);
+  border-radius:8px;
+  text-decoration:none;
+  color:var(--primary-light);
+  background:var(--primary-dark, transparent);
+  font-size:14px;
+}
+
+.badge{
+  display:inline-block;
+  position: relative;
+  padding:2px 2px;
+  font-size:10px;
+  top: -4px;
+  right: 5px;
+  transform: translateY(-4px);
+  border-radius:999px;
+  background:var(--primary-dark);
+}
+
+.select, .search{
+  padding:10px 12px;
+  border:1px solid var(--primary-light);
+  border-radius:8px;
+  background:var(--primary-dark);
+  color:var(--primary-light);
+  font-size:14px;
+}
+
+.search{
+  min-width:220px;
+}

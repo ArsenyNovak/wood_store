@@ -8,11 +8,27 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;700&display=swap" rel="stylesheet">
     <!-- Styles -->
-    <link rel="stylesheet" href="/wood/static/css/index.css">
+    <link rel="stylesheet" href="/wood/static/css/style.css">
 
 </head>
 <body>
 {% block content %} {% endblock %}
+<footer class="site-footer">
+<div class="container footer-inner">
+  <div class="img_tree_left"></div>
+  <div class="social">
+      <a class="icons_link" href="https://www.instagram.com/warmth_of_wood_candles/">
+          <span class="icons__instagram">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#f4c694">
+                <path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5A4.25 4.25 0 0 0 7.75 20.5h8.5a4.25 4.25 0 0 0 4.25-4.25v-8.5A4.25 4.25 0 0 0 16.25 3.5h-8.5zM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 1.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm5.09-2.75a1.25 1.25 0 1 1-2.5 0 1.25 1.25 0 0 1 2.5 0z"/>
+              </svg>
+          </span>
+      </a>
+      <small>© <span id="year"></span>  warmth_of_wood</small>
+  </div>
+  <div class="img_tree_right"></div>
+</div>
+</footer>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 {% block scripts %} {% endblock %}
