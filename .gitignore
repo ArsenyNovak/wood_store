@@ -1,3 +1,4 @@
-.venv
-.idea
+.venv/
+.idea/
 .env
+wood_app/static/image/products/

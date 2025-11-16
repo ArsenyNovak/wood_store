@@ -44,14 +44,14 @@ function displayProducts(products) {
       const article = document.createElement('article');
       article.className = 'card';
       article.innerHTML = `
-        <a href="#" class="card-link" aria-label="Открыть ${product.title}">
+        <div class="card-link" id="product_${product.product_id}">
           <img src="/${product.images[0].url}" alt="${product.title}">
           <div class="card-body">
             <h3 class="card-title">${product.title}</h3>
             <div><span class="card-category">${product.category.title}</span></div>
             <h3 class="price">${product.price} р.</h3>
           </div>
-        </a>
+        </div>
         <button class="btn-cart" data-id="${product.id}">
           ${product.count ? "В корзину" : "Заказать"}
         </button>
@@ -105,15 +105,117 @@ function setupPagination(totalProducts) {
     paginationContainer.appendChild(nextButton);
 }
 
+// Modal
+
+const productModal = document.querySelector('.modal__products');
+const modalCloseButton = document.querySelector('.modal__close-button');
+
+function populateModal(product) {
+  const imageContainerSlider = document.querySelector('.modal__slider');
+  imageContainerSlider.innerHTML = '';
+  for (let i = 0; i < product.images.length; i += 1) {
+    const image = document.createElement('img');
+    image.src = '/' + product.images[i].url
+    image.classList.add('modal__image');
+    imageContainerSlider.appendChild(image);
+  }
+
+  const modalContent = document.querySelector('.modal__content-container');
+  modalContent.innerHTML = `
+          <div class="modal__content">
+            <h2 class="center_text">${product.title}</h2>
+            <h3 class="modal__product-describe">Описание: ${product.describe}</h3>
+            <h2 class="modal__product-price">Цена: ${product.price} р.</h2>
+          </div>
+        <button class="modal__btn-cart" data-id="${product.id}">
+          ${product.count ? "В корзину" : "Заказать"}
+        </button>
+      `;
+
+
+  const slider = document.querySelector('.modal__slider');
+  const prevButton = document.querySelector('.modal__prev-button');
+  const nextButton = document.querySelector('.modal__next-button');
+  const slides = Array.from(slider.querySelectorAll('img'));
+  const slideCount = slides.length;
+  let slideIndex = 0;
+
+  // Устанавливаем обработчики событий для кнопок
+  prevButton.addEventListener('click', showPreviousSlide);
+  nextButton.addEventListener('click', showNextSlide);
+
+  // Функция для показа предыдущего слайда
+  function showPreviousSlide() {
+    slideIndex = (slideIndex - 1 + slideCount) % slideCount;
+    updateSlider();
+  }
+
+  // Функция для показа следующего слайда
+  function showNextSlide() {
+    slideIndex = (slideIndex + 1) % slideCount;
+    updateSlider();
+  }
+
+  // Функция для обновления отображения слайдера
+  function updateSlider() {
+    slides.forEach((slide, index) => {
+      if (index === slideIndex) {
+        slide.style.display = 'block';
+      } else {
+        slide.style.display = 'none';
+      }
+    });
+  }
+
+    // Инициализация слайдера
+  updateSlider();
+
+  modalCloseButton.addEventListener('click', () => {
+    productModal.close();
+  });
+
+  productModal.addEventListener('click', (event) => {
+    if (
+      event.clientX < productModal.getBoundingClientRect().left ||
+      event.clientX > productModal.getBoundingClientRect().right ||
+      event.clientY < productModal.getBoundingClientRect().top ||
+      event.clientY > productModal.getBoundingClientRect().bottom
+    ) {
+      productModal.close();
+      documentBody.classList.remove('noscroll');
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && productModal.open) {
+      documentBody.classList.remove('noscroll');
+    }
+  });
+}
+
+function addProductItemClickListeners(products) {
+  const ProductItems = document.querySelectorAll('.card-link');
+
+  ProductItems.forEach((item) => {
+    item.addEventListener('click', () => {
+      const product = products.find((element) => element.product_id == item.id.split("_")[1]);
+      populateModal(product);
+      productModal.showModal();
+      documentBody.classList.add('noscroll');
+    });
+  });
+}
+
 function updateDisplay() {
     const start = (currentPage - 1) * productsPerPage;
     const end = start + productsPerPage;
     const productsToShow = allProducts.slice(start, end);
     displayProducts(productsToShow);
+    addProductItemClickListeners(productsToShow)
     setupPagination(allProducts.length);
 }
 
- loadAllProducts();
+loadAllProducts();
 
 yearSpan.textContent = new Date().getFullYear();
 
