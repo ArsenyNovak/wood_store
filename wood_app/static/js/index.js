@@ -1,273 +1,528 @@
+/* ================================
+   Helpers
+================================ */
+
+const q = (sel, root = document) => root.querySelector(sel);
+const qa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+const fmt = (num) => `${Number(num).toFixed(2)} р.`;
+
+/* ================================
+   DOM Elements
+================================ */
+
 const productsRoot = document.getElementById('products');
-const yearSpan = document.getElementById('year');
 const cartCountEl = document.getElementById('cartCount');
+const noProductsMessage = document.getElementById('no-products-message');
+const paginationRoot = document.getElementById('pagination');
+
+const productModal = document.getElementById('productModal');
+const cartModal = document.getElementById('cartModal');
+
+const productModalSlider = productModal?.querySelector('[data-slider]');
+const productModalContent = productModal?.querySelector('[data-modal-content]');
+const cartContainer = document.getElementById('cart');
+
+const sentinel = document.getElementById('scroll-sentinel');
+
+/* ================================
+   State
+================================ */
 
 let allProducts = [];
-const productsPerPage = 5;
-let currentPage = 1;
+let renderedCount = 0;
+const batchSize = 8;
+
+let cart = {};          // { product_id: quantity }
+let cartDetails = {};   // { product_id: { product, quantity } }
+
+let slider = {
+  slides: [],
+  index: 0
+};
+
+/* ================================
+   Utils
+================================ */
+
+function truncate(text, n = 70) {
+  if (!text) return '';
+  return text.length > n ? text.slice(0, n) + '...' : text;
+}
+
+function isTelegramUser() {
+  return !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
+}
+
+/* ================================
+   Load products
+================================ */
 
 async function loadAllProducts() {
-    const select = document.getElementById('category');
-    const selectedCategory = select.value;  // Получаем текущий выбор
+  const select = document.getElementById('category');
+  const selected = select ? select.value : 'all';
 
-    const url = new URL('/wood/applications/api/products', window.location.origin);
+  const url = new URL('/wood/applications/api/products', window.location.origin);
+  if (selected !== 'all') url.searchParams.append('category', selected);
 
-    if (selectedCategory && selectedCategory !== 'all') {
-        url.searchParams.append('category', selectedCategory);
-    }
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("Ошибка загрузки");
-      const data = await response.json();
-      allProducts = data.products;
-      updateDisplay();
-    } catch (e) {
-      document.getElementById('no-products-message').textContent = 'Ошибка загрузки товаров';
-      document.getElementById('no-products-message').classList.remove('no_products');
-    }
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error();
+
+    const json = await res.json();
+    allProducts = json.products || [];
+    renderedCount = 0;
+    productsRoot.innerHTML = '';
+
+    renderNextBatch();
+  } catch (err) {
+    noProductsMessage.textContent = 'Ошибка загрузки товаров';
+    noProductsMessage.style.display = 'block';
+    productsRoot.style.display = 'none';
+  }
 }
+
+/* Category change */
+document.getElementById('category')?.addEventListener('change', loadAllProducts);
+document.getElementById('category-form')?.addEventListener('submit', (e) => {
+  e.preventDefault();
+  loadAllProducts();
+});
+
+/* ================================
+   Render product cards
+================================ */
+
+function createCard(product) {
+  const card = document.createElement('article');
+  card.className = 'product-card';
+
+  const link = document.createElement('div');
+  link.className = 'product-card__link';
+  link.dataset.productId = product.product_id;
+
+  const img = document.createElement('img');
+  img.className = 'product-card__image';
+  img.src = `/${product.images?.[0]?.url || ''}`;
+  img.alt = product.title;
+
+  const body = document.createElement('div');
+  body.className = 'product-card__body';
+
+  body.innerHTML = `
+    <div class="product-card__title">${product.title}</div>
+    <div class="product-card__category">${product.category?.title || ''}</div>
+    <div class="product-card__price">${product.price} р.</div>
+  `;
+
+  const btn = document.createElement('button');
+  btn.className = 'product-card__action btn btn--primary';
+  btn.type = 'button';
+  btn.dataset.id = product.product_id;
+  btn.textContent = 'В корзину';
+  if (cart[product.product_id]) {
+    btn.classList.add('btn--disabled');
+    btn.textContent = 'В корзине';
+    btn.disabled = true;
+  }
+
+  link.appendChild(img);
+  link.appendChild(body);
+  card.appendChild(link);
+  card.appendChild(btn);
+
+  return card;
+}
+
+function createCartItem(p) {
+  const { product_id, title, describe, images, price } = p;
+  const quantity = cartDetails[product_id].quantity;
+
+  const el = document.createElement('div');
+  el.className = 'cart-modal__item';
+  el.dataset.productId = product_id;
+
+  // если товар уникальный — кнопки +/- не показывать
+  let controlsHtml = '';
+
+  if (!p.unique) {
+    controlsHtml = `
+      <button class="btn btn--primary cart-modal__btn--minus" data-id="${p.product_id}">-</button>
+      <div class="cart-modal__count" data-id="${p.product_id}">${quantity}</div>
+      <button class="btn btn--primary cart-modal__btn--plus" data-id="${p.product_id}">+</button>
+    `;
+  } else {
+    controlsHtml = `
+      <div class="cart-modal__count" data-id="${p.product_id}">1</div>
+    `;
+  }
+
+
+  el.innerHTML = `
+    <img class="cart-modal__thumb" src="/${images[0].url}" alt="${title}">
+    <div class="cart-modal__info">
+      <div class="cart-modal__title">${title}</div>
+      <div class="cart-modal__desc">${truncate(describe, 80)}</div>
+    </div>
+
+    <div class="cart-modal__controls">
+      ${controlsHtml}
+    </div>
+
+    <div class="cart-modal__total" data-id="${product_id}">
+      ${fmt(price * quantity)}
+    </div>
+  `;
+
+
+  cartContainer.appendChild(el);
+}
+
+function addCartSummary() {
+  const summary = document.createElement('div');
+  summary.className = 'cart-modal__summary';
+
+  summary.innerHTML = `
+    <div class="cart-modal__sum">Итого: <span id="cart-total-price">0 р.</span></div>
+    <button class="cart-modal__checkout btn btn--primary" id="checkout-button">Оформить заказ</button>
+  `;
+
+  cartContainer.appendChild(summary);
+}
+
 
 function displayProducts(products) {
-    const container = document.getElementById('products');
-    const noProductsMessage = document.getElementById('no-products-message');
+  productsRoot.innerHTML = '';
 
-    container.innerHTML = "";
-    if (!products || products.length === 0) {
-      noProductsMessage.style.display = "block";
-      container.style.display = "none";
-      return;
-    }
-    noProductsMessage.style.display = "none";
-    container.style.display = "flex";
+  if (!products.length) {
+    noProductsMessage.style.display = 'block';
+    productsRoot.style.display = 'none';
+    return;
+  }
 
-    products.forEach(product => {
-      const article = document.createElement('article');
-      article.className = 'card';
-      article.innerHTML = `
-        <div class="card-link" id="product_${product.product_id}">
-          <img src="/${product.images[0].url}" alt="${product.title}">
-          <div class="card-body">
-            <h3 class="card-title">${product.title}</h3>
-            <div><span class="card-category">${product.category.title}</span></div>
-            <h3 class="price">${product.price} р.</h3>
-          </div>
-        </div>
-        <button class="btn-cart" data-id="${product.id}">
-          ${product.count ? "В корзину" : "Заказать"}
-        </button>
-      `;
-      container.appendChild(article);
-    });
+  noProductsMessage.style.display = 'none';
+  productsRoot.style.display = 'flex';
+
+  const fragment = document.createDocumentFragment();
+  products.forEach(p => fragment.appendChild(createCard(p)));
+  productsRoot.appendChild(fragment);
 }
 
-function setupPagination(totalProducts) {
-    const paginationContainer = document.getElementById('pagination');
-    paginationContainer.innerHTML = "";
+/* ================================
+   render next
+================================ */
 
-    const totalPages = Math.ceil(totalProducts / productsPerPage);
-    if (totalPages <= 1) {
-      paginationContainer.style.display = "none";
-      return;
-    }
-    paginationContainer.style.display = "block";
+function renderNextBatch() {
+  const batch = allProducts.slice(renderedCount, renderedCount + batchSize);
+  if (!batch.length) return;
 
-    const prevButton = document.createElement('button');
-    prevButton.textContent = "«";
-    prevButton.disabled = currentPage === 1;
-    prevButton.onclick = () => {
-      if (currentPage > 1) {
-        currentPage--;
-        updateDisplay();
-      }
-    };
-    paginationContainer.appendChild(prevButton);
+  const fragment = document.createDocumentFragment();
+  batch.forEach(p => fragment.appendChild(createCard(p)));
 
-    for(let i = 1; i <= totalPages; i++) {
-      const btn = document.createElement('button');
-      btn.textContent = i;
-      if (i === currentPage) btn.classList.add('active');
-      btn.onclick = () => {
-        currentPage = i;
-        updateDisplay();
-      };
-      paginationContainer.appendChild(btn);
-    }
-
-    const nextButton = document.createElement('button');
-    nextButton.textContent = "»";
-    nextButton.disabled = currentPage === totalPages;
-    nextButton.onclick = () => {
-      if (currentPage < totalPages) {
-        currentPage++;
-        updateDisplay();
-      }
-    };
-    paginationContainer.appendChild(nextButton);
+  productsRoot.appendChild(fragment);
+  renderedCount += batchSize;
 }
 
-// Modal
+/* ================================
+   Product modal
+================================ */
 
-const productModal = document.querySelector('.modal__products');
-const modalCloseButton = document.querySelector('.modal__close-button');
+function openProductModal(product) {
+  productModalSlider.innerHTML = '';
+  slider.slides = [];
 
-function populateModal(product) {
-  const imageContainerSlider = document.querySelector('.modal__slider');
-  imageContainerSlider.innerHTML = '';
-  for (let i = 0; i < product.images.length; i += 1) {
-    const image = document.createElement('img');
-    image.src = '/' + product.images[i].url
-    image.classList.add('modal__image');
-    imageContainerSlider.appendChild(image);
-  }
+  product.images.forEach(img => {
+    const el = document.createElement('img');
+    el.className = 'product-modal__slide';
+    el.src = `/${img.url}`;
+    productModalSlider.appendChild(el);
+    slider.slides.push(el);
+  });
 
-  const modalContent = document.querySelector('.modal__content-container');
-  modalContent.innerHTML = `
-          <div class="modal__content">
-            <h2 class="center_text">${product.title}</h2>
-            <h3 class="modal__product-describe">Описание: ${product.describe}</h3>
-            <h2 class="modal__product-price">Цена: ${product.price} р.</h2>
-          </div>
-        <button class="modal__btn-cart" data-id="${product.id}">
-          ${product.count ? "В корзину" : "Заказать"}
-        </button>
-      `;
-
-
-  const slider = document.querySelector('.modal__slider');
-  const prevButton = document.querySelector('.modal__prev-button');
-  const nextButton = document.querySelector('.modal__next-button');
-  const slides = Array.from(slider.querySelectorAll('img'));
-  const slideCount = slides.length;
-  let slideIndex = 0;
-
-  // Устанавливаем обработчики событий для кнопок
-  prevButton.addEventListener('click', showPreviousSlide);
-  nextButton.addEventListener('click', showNextSlide);
-
-  // Функция для показа предыдущего слайда
-  function showPreviousSlide() {
-    slideIndex = (slideIndex - 1 + slideCount) % slideCount;
-    updateSlider();
-  }
-
-  // Функция для показа следующего слайда
-  function showNextSlide() {
-    slideIndex = (slideIndex + 1) % slideCount;
-    updateSlider();
-  }
-
-  // Функция для обновления отображения слайдера
-  function updateSlider() {
-    slides.forEach((slide, index) => {
-      if (index === slideIndex) {
-        slide.style.display = 'block';
-      } else {
-        slide.style.display = 'none';
-      }
-    });
-  }
-
-    // Инициализация слайдера
+  slider.index = 0;
   updateSlider();
 
-  modalCloseButton.addEventListener('click', () => {
-    productModal.close();
-  });
+  productModalContent.innerHTML = `
+    <h2 class="product-modal__title">${product.title}</h2>
+    <div class="product-modal__desc">Описание: ${product.describe}</div>
+    <div class="product-modal__price">Цена: ${product.price} р.</div>
+    <button class="btn btn--primary product-modal__add" data-id="${product.product_id}">В корзину</button>
+  `;
 
-  productModal.addEventListener('click', (event) => {
-    if (
-      event.clientX < productModal.getBoundingClientRect().left ||
-      event.clientX > productModal.getBoundingClientRect().right ||
-      event.clientY < productModal.getBoundingClientRect().top ||
-      event.clientY > productModal.getBoundingClientRect().bottom
-    ) {
-      productModal.close();
-      documentBody.classList.remove('noscroll');
-    }
-  });
+  const addBtn = q('.product-modal__add', productModal);
 
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && productModal.open) {
-      documentBody.classList.remove('noscroll');
-    }
+  if (cart[product.product_id]) {
+    addBtn.textContent = 'В корзине';
+    addBtn.disabled = true;
+  } else {
+    addBtn.onclick = () => {
+      cart[product.product_id] = 1;
+      updateCartBadge();
+      addBtn.textContent = 'В корзине';
+      addBtn.disabled = true;
+      closeProductModal();
+    };
+  }
+
+  productModal.showModal();
+  document.body.classList.add('noscroll');
+}
+
+function updateSlider() {
+  slider.slides.forEach((el, i) => {
+    el.style.display = i === slider.index ? 'block' : 'none';
   });
 }
 
-function addProductItemClickListeners(products) {
-  const ProductItems = document.querySelectorAll('.card-link');
+function nextSlide() {
+  slider.index = (slider.index + 1) % slider.slides.length;
+  updateSlider();
+}
 
-  ProductItems.forEach((item) => {
-    item.addEventListener('click', () => {
-      const product = products.find((element) => element.product_id == item.id.split("_")[1]);
-      populateModal(product);
-      productModal.showModal();
-      documentBody.classList.add('noscroll');
+function prevSlide() {
+  slider.index = (slider.index - 1 + slider.slides.length) % slider.slides.length;
+  updateSlider();
+}
+
+function closeProductModal() {
+  productModal.close();
+  document.body.classList.remove('noscroll');
+}
+
+/* modal controls */
+productModal?.addEventListener('click', (e) => {
+  if (e.target === productModal) closeProductModal();
+});
+q('.product-modal__close', productModal)?.addEventListener('click', closeProductModal);
+q('.product-modal__btn--next', productModal)?.addEventListener('click', nextSlide);
+q('.product-modal__btn--prev', productModal)?.addEventListener('click', prevSlide);
+
+/* ================================
+   Add to cart from product list
+================================ */
+
+productsRoot.addEventListener('click', (e) => {
+  const addBtn = e.target.closest('.product-card__action');
+  if (addBtn) {
+    const id = addBtn.dataset.id;
+
+    // товар уже есть → не добавляем повторно
+    if (cart[id]) return;
+
+    cart[id] = 1;
+    updateCartBadge();
+
+    // обновляем кнопку (В корзине)
+    addBtn.textContent = 'В корзине';
+    addBtn.disabled = true;
+    addBtn.classList.add('btn--disabled');
+
+    return;
+  }
+
+  const link = e.target.closest('.product-card__link');
+  if (link) {
+    const id = link.dataset.productId;
+    const product = allProducts.find(p => p.product_id == id);
+    if (product) openProductModal(product);
+  }
+});
+
+/* ================================
+   Cart: load from server (Telegram)
+================================ */
+
+async function loadCartFromServer() {
+  if (!isTelegramUser()) return;
+
+  try {
+    const user = Telegram.WebApp.initDataUnsafe.user;
+    if (!user) return;
+
+    const res = await fetch('/wood/applications/api/get_cart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telegram_id: user.id })
     });
+
+    const json = await res.json();
+    const serverCart = json.cart?.products || {};
+
+    Object.assign(cart, serverCart);
+    updateCartBadge();
+  } catch (err) {
+    console.warn('Cart load error:', err);
+  }
+}
+
+/* ================================
+   Cart modal assembly (uses unit prices!)
+================================ */
+
+async function showCartModal() {
+  // --- очищаем старые товары ---
+  cartContainer.querySelectorAll('.cart-modal__item').forEach(n => n.remove());
+
+  // --- удаляем старый summary ---
+  cartContainer.querySelector('.cart-modal__summary')?.remove();
+
+  const emptyMsg = q('#no-products-in-cart', cartContainer);
+  const ids = Object.keys(cart);
+
+  // Если корзина пустая
+  if (!ids.length) {
+    emptyMsg.style.display = 'block';
+    cartModal.showModal();
+    document.body.classList.add('noscroll');
+    return;
+  }
+
+  emptyMsg.style.display = 'none';
+
+  // Загружаем товары
+  const url = new URL('/wood/applications/api/cart-products', window.location.origin);
+  url.searchParams.append('selected_products', ids);
+
+  let products = [];
+  try {
+    const res = await fetch(url);
+    products = (await res.json()).products || [];
+  } catch (err) {
+    console.error(err);
+  }
+
+  // Формируем cartDetails
+  cartDetails = {};
+  products.forEach(p => {
+    cartDetails[p.product_id] = {
+      product: p,
+      quantity: cart[p.product_id] || 1
+    };
   });
+
+  // Рендерим товары
+  products.forEach(p => createCartItem(p));
+
+  // Добавляем summary (он всегда только 1)
+  addCartSummary();
+
+  // Вешаем события
+  cartContainer.removeEventListener('click', onCartClick);
+  cartContainer.addEventListener('click', onCartClick);
+
+  q('#checkout-button', cartContainer)?.removeEventListener('click', onCheckout);
+  q('#checkout-button', cartContainer)?.addEventListener('click', onCheckout);
+
+  updateTotal();
+  cartModal.showModal();
+  document.body.classList.add('noscroll');
 }
 
-function updateDisplay() {
-    const start = (currentPage - 1) * productsPerPage;
-    const end = start + productsPerPage;
-    const productsToShow = allProducts.slice(start, end);
-    displayProducts(productsToShow);
-    addProductItemClickListeners(productsToShow)
-    setupPagination(allProducts.length);
+
+/* ================================
+   Cart: update logic
+================================ */
+
+function onCartClick(e) {
+  const plus = e.target.closest('.cart-modal__btn--plus');
+  const minus = e.target.closest('.cart-modal__btn--minus');
+  if (!plus && !minus) return;
+
+  const id = (plus || minus).dataset.id;
+  const item = cartDetails[id];
+
+  // уникальный товар — нельзя менять количество
+  if (item.product.unique) return;
+
+  if (plus) item.quantity++;
+  if (minus) item.quantity--;
+
+  if (item.quantity <= 0) {
+    delete cart[id];
+    delete cartDetails[id];
+    cartContainer.querySelector(`.cart-modal__item[data-product-id="${id}"]`)?.remove();
+  } else {
+    cart[id] = item.quantity;
+    updateItemRow(id);
+  }
+
+  updateCartBadge();
+  updateTotal();
 }
 
-loadAllProducts();
 
-yearSpan.textContent = new Date().getFullYear();
+function updateItemRow(id) {
+  const item = cartDetails[id];
+  const el = cartContainer.querySelector(`.cart-modal__item[data-product-id="${id}"]`);
+  if (!el) return;
 
-// timer
+  el.querySelector('.cart-modal__count').textContent = item.quantity;
+  el.querySelector('.cart-modal__total').textContent = fmt(item.product.price * item.quantity);
+}
 
-//document.addEventListener('DOMContentLoaded', function() {
-//
-//    const deadline = new Date("2026-01-01T00:00:00.000+00:00");
-//
-//    function countdownTimer() {
-//      const diff = deadline - new Date();
-//
-//      const days = Math.floor(diff / 1000 / 60 / 60 / 24);
-//      const hours = Math.floor(diff / 1000 / 60 / 60) % 24;
-//      const minutes = Math.floor(diff / 1000 / 60) % 60;
-//      const seconds = Math.floor(diff / 1000) % 60;
-//
-//      $days.textContent = days;
-//      $hours.textContent = hours;
-//      $minutes.textContent = minutes;
-//      $seconds.textContent = seconds;
-//
-//    }
-//
-//    const $days = document.querySelector('.timer__days');
-//    const $hours = document.querySelector('.timer__hours');
-//    const $minutes = document.querySelector('.timer__minutes');
-//    const $seconds = document.querySelector('.timer__seconds');
-//
-//    countdownTimer();
-//
-//    timerId = setInterval(countdownTimer, 1000);
-//  });
-//productsRoot.addEventListener('click', (e) => {
-//  const btn = e.target.closest('.btn-cart');
-//  if(!btn) return;
-//  const id = btn.getAttribute('data-id');
-//  if(!id) return;
-//  addToCart(id);
-//});
-//
-//function addToCart(id){
-//  const cart = JSON.parse(localStorage.getItem('wc_cart') || '[]');
-//  cart.push(id);
-//  localStorage.setItem('wc_cart', JSON.stringify(cart));
-//  updateCartCount();
-//  alert('Добавлено в корзину');
-//}
-//
-//function updateCartCount(){
-//  const cart = JSON.parse(localStorage.getItem('wc_cart') || '[]');
-//  if(cartCountEl) cartCountEl.textContent = cart.length;
-//}
-//updateCartCount();
+function updateTotal() {
+  let sum = 0;
+  Object.values(cartDetails).forEach(({ product, quantity }) => {
+    sum += product.price * quantity;
+  });
+  q('#cart-total-price').textContent = fmt(sum);
+}
 
+/* ================================
+   Close cart modal
+================================ */
+
+function closeCart() {
+  cartContainer.removeEventListener('click', onCartClick);
+  q('#checkout-button', cartContainer)?.removeEventListener('click', onCheckout);
+  cartModal.close();
+  document.body.classList.remove('noscroll');
+}
+
+cartModal?.addEventListener('click', (e) => {
+  if (e.target === cartModal) closeCart();
+});
+
+q('.cart-modal__close', cartModal)?.addEventListener('click', closeCart);
+
+function onCheckout() {
+  alert('🎉 Заказ оформлен!');
+
+  cart = {};
+  cartDetails = {};
+
+  updateCartBadge();
+  closeCart();
+}
+
+function updateCartBadge() {
+  cartCountEl.textContent = Object.keys(cart).length;
+}
+
+/* ================================
+   Open cart
+================================ */
+
+q('.header__cart')?.addEventListener('click', showCartModal);
+
+/* ================================
+   endless loading products
+================================ */
+
+const observer = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting) {
+    renderNextBatch();
+  }
+});
+
+observer.observe(sentinel);
+
+/* ================================
+   Init
+================================ */
+
+async function init() {
+  await loadAllProducts();
+  await loadCartFromServer();
+}
+
+init();

@@ -45,10 +45,10 @@ app.include_router(router_pages)
 #     await dp.feed_update(bot, update)
 #     logging.info("Update processed")
 
-#  # закомментировать при работе через WEBHOOK
-#
-# async def main():
-#     await dp.start_polling(bot)
-#
-# if __name__ == "__main__":
-#     asyncio.run(main())
+ # закомментировать при работе через WEBHOOK
+
+async def main():
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())

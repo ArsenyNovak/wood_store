@@ -10,7 +10,7 @@ class ImageBase64(BaseModel):
 class ProductCreate(BaseModel):
     title: str
     describe: str
-    count: int = 0
+    unique: bool = False
     price: float = 0.0
     category_id: int
     images: Optional[List[ImageBase64]] = []

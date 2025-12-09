@@ -5,83 +5,72 @@
 {% endblock %}
 
 {% block content %}
-<header class="site-header">
-    <div class="container header-inner">
-      <a class="brand" href="{{ url_for('read_root') }}">
-          <span class="logo-img"></span>
-      </a>
-      <nav class="controls" aria-label="Фильтры">
-        <form method="get">
-            <label for="category" class="visually-hidden">Категория</label>
-            <select id="category" name="category" class="select" onchange="this.form.submit()">
-              <option value="all" {% if selected_category == "all" %}selected{% endif %}>Все изделия</option>
-              {% for category in categories %}
-              <option value="{{ category.category_id }}" {% if selected_category == category.category_id|string %}selected{% endif %}>{{ category.title }}</option>
-              {% endfor %}
-            </select>
-        </form>
-        <a href="cart.html" class="cart-link" aria-label="Перейти в корзину">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
-            <path d="M6 6H21L20 12H8L6 6Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="currentColor"/>
-            <path d="M7 18a2 2 0 100 4 2 2 0 000-4zM17 18a2 2 0 100 4 2 2 0 000-4z" fill="currentColor"/>
-          </svg>
-          <span class="visually-hidden">Корзина</span>
-          <span id="cartCount" class="badge">0</span>
-        </a>
-      </nav>
-    </div>
+<header class="header">
+  <div class="header__inner container">
+    <a class="header__brand" href="{{ url_for('read_root') }}">
+      <span class="header__logo" role="img" aria-hidden="true"></span>
+    </a>
+
+    <nav class="header__controls" aria-label="Фильтры">
+      <form id="category-form" method="get" class="filter">
+        <label for="category" class="visually-hidden">Категория</label>
+        <select id="category" name="category" class="filter__select">
+          <option value="all" {% if selected_category == "all" %}selected{% endif %}>Все изделия</option>
+          {% for category in categories %}
+          <option value="{{ category.category_id }}" {% if selected_category == category.category_id|string %}selected{% endif %}>{{ category.title }}</option>
+          {% endfor %}
+        </select>
+      </form>
+
+      <button type="button" class="header__cart" aria-label="Перейти в корзину">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 6H21L20 12H8L6 6Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="currentColor"/>
+          <path d="M7 18a2 2 0 100 4 2 2 0 000-4zM17 18a2 2 0 100 4 2 2 0 000-4z" fill="currentColor"/>
+        </svg>
+        <span class="visually-hidden">Корзина</span>
+        <span id="cartCount" class="header__badge">0</span>
+      </button>
+    </nav>
+  </div>
 </header>
 
-  <main class="container">
-<!--    <section class="hero">-->
-<!--      <p>Тепло дерева — в каждом подарке!-->
-<!--Вазы, свечи, игрушки из натурального дерева наполнят дом ароматом уюта и новогоднего волшебства.</p>-->
-<!--        <span class="caption static-white-color">The New Year is Coming Soon...</span>-->
-<!--        <div class="timer">-->
-<!--            <div class="timer_digits flex_clmn_center">-->
-<!--                <h4 class="center_text timer__days">47</h4>-->
-<!--                <h4 class="center_text">days</h4>-->
-<!--            </div >-->
-<!--            <span class="separator">|</span>-->
-<!--            <div class="timer_digits flex_clmn_center">-->
-<!--                <h4 class="center_text timer__hours">5</h4>-->
-<!--                <h4 class="center_text">hours</h4>-->
-<!--            </div>-->
-<!--            <span class="separator">|</span>-->
-<!--            <div class="timer_digits flex_clmn_center">-->
-<!--                <h4 class="center_text timer__minutes">34</h4>-->
-<!--                <h4 class="center_text">minutes</h4>-->
-<!--            </div>-->
-<!--            <span class="separator">|</span>-->
-<!--            <div class="timer_digits flex_clmn_center ">-->
-<!--                <h4 class="center_text timer__seconds">12</h4>-->
-<!--                <h4 class="center_text">seconds</h4>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--      <p class="lead"></p>-->
-<!--    </section>-->
+<main class="container main">
+  <section aria-live="polite" class="product-list">
+    <div id="products" class="product-list__grid"></div>
+    <div id="no-products-message" class="product-list__empty">Товары не найдены</div>
+    <div id="scroll-sentinel"></div>
+  </section>
 
-    <section   aria-live="polite">
-      <div id="products" class="layout"></div>
-      <div id="no-products-message" class="no_products">Товары не найдены</div>
-      <div class="pagination" id="pagination"></div>
-    </section>
-    <dialog class="modal__products">
-        <div class="modal__product-container">
-          <div id="slider" class="modal__slider-container">
-              <div class="modal__slider"></div>
-              <button class="modal__prev-button" aria-label="Посмотреть предыдущий слайд">&lt;</button>
-              <button class="modal__next-button" aria-label="Посмотреть следующий слайд">&gt</button>
-          </div>
-          <div class="modal__content-container"></div>
-          <button class="modal__close-button">
-            <span class="modal__close-button-icon1"></span>
-            <span class="modal__close-button-icon2"></span>
-          </button>
-        </div>
-    </dialog>
+  <!-- Product modal -->
+  <dialog class="product-modal" id="productModal" aria-hidden="true">
+    <div class="product-modal__wrap">
+      <div class="product-modal__slider-wrap">
+        <div class="product-modal__slider" data-slider></div>
+        <button class="product-modal__btn product-modal__btn--prev" aria-label="Посмотреть предыдущий слайд">&lt;</button>
+        <button class="product-modal__btn product-modal__btn--next" aria-label="Посмотреть следующий слайд">&gt;</button>
+      </div>
 
-  </main>
+      <div class="product-modal__content" data-modal-content></div>
+
+      <button class="product-modal__close" aria-label="Закрыть модальное окно">
+      </button>
+    </div>
+  </dialog>
+
+  <!-- Cart dialog (reworked markup uses BEM elements inside) -->
+  <dialog class="cart-modal" id="cartModal" aria-hidden="true">
+    <div class="cart-modal__wrapper" id="cart">
+      <button class="cart-modal__close" aria-label="Закрыть корзину">
+        <span class="cart-modal__close-line"></span>
+        <span class="cart-modal__close-line"></span>
+      </button>
+
+      <div id="no-products-in-cart" class="cart-modal__empty">В корзине пока пусто</div>
+      <!-- JS динамически добавляет .cart-modal__item -->
+      <!-- summary будет добавлена JS в конец контейнера -->
+    </div>
+  </dialog>
+</main>
 
 {% endblock %}
 

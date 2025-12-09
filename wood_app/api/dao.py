@@ -2,7 +2,7 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload, selectinload
 from wood_app.dao.base import BaseDAO
-from wood_app.api.models import Category, Product, User, ProductImage
+from wood_app.api.models import Category, Product, User, ProductImage, Cart
 from wood_app.database import async_session_maker
 
 class CategoryDAO(BaseDAO):
@@ -32,8 +32,27 @@ class ProductDAO(BaseDAO):
             result = await session.execute(query)
             return result.scalars().all()
 
+
+    @classmethod
+    async def find_cart(cls, selected_products):
+        async with async_session_maker() as session:
+            query = (select(cls.model).filter(cls.model.product_id.in_(selected_products))
+                    .options(selectinload(cls.model.images))
+                    .options(selectinload(cls.model.category))
+            )
+            result = await session.execute(query)
+            return result.scalars().all()
+
+
+
+
 class UserDAO(BaseDAO):
     model = User
 
+
 class ProductImageDAO(BaseDAO):
     model = ProductImage
+
+
+class CartDAO(BaseDAO):
+    model = Cart

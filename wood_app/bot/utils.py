@@ -51,4 +51,4 @@ def cyrillicToLatin(text):
     # Удаление дефисов с начала и конца строки
     translit_text = translit_text.strip('-')
 
-    return translit_text
+    return translit_text + '_'

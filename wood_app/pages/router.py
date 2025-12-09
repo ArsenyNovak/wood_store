@@ -7,12 +7,13 @@ from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
+from wood_app.api.models import Cart
 from wood_app.api.forms import ProductCreate
 from wood_app.bot.utils import cyrillicToLatin
 from wood_app.bot.kbs import main_keyboard
 from wood_app.config import settings
 from wood_app.bot.create_bot import bot
-from wood_app.api.dao import CategoryDAO, ProductDAO, ProductImageDAO
+from wood_app.api.dao import CategoryDAO, ProductDAO, ProductImageDAO, CartDAO
 
 router_pages = APIRouter(prefix='/applications')
 templates = Jinja2Templates(directory='wood_app/templates')
@@ -38,6 +39,27 @@ async def get_products(category: str = "all"):
     return {"products": products}
 
 
+@router_pages.post("/api/get_cart", response_class=JSONResponse)
+async def load_cart(data):
+    telegram_id = data.telegram_id
+    cart = await CartDAO.find_one_or_none(user_id=telegram_id, is_executed=Cart.ExecutedEnum.look)
+    return {"cart": cart}
+
+
+@router_pages.get("/api/cart-products", response_class=JSONResponse)
+async def cart_products(selected_products: str):
+    selected_products = list(map(int, selected_products.split(",")))
+    products = await ProductDAO.find_cart(selected_products)
+    return {"products": products}
+
+
+# @router_pages.post("/api/save_cart", response_class=JSONResponse)
+# async def save_cart(data):
+#     telegram_id = data.
+#     cart = await CartDAO.find_one_or_none(user_id=telegram_id, is_executed=Cart.ExecutedEnum.look)
+#     return {"cart": cart}
+
+
 @router_pages.get("/create_products", response_class=HTMLResponse)
 async def create_product(request: Request):
     categories = await CategoryDAO.find_all()
@@ -52,24 +74,30 @@ async def create_product(request: Request):
 @router_pages.post("/create_products", response_class=JSONResponse)
 async def create_product(data: ProductCreate):
     new_catalog = cyrillicToLatin(data.title)
+    count_catalog = 1
+    while os.path.isdir(f"wood_app/static/image/products/{new_catalog}{count_catalog}"):
+        count_catalog += 1
+    new_catalog += str(count_catalog)
     base_upload_dir = f"wood_app/static/image/products/{new_catalog}"
     os.makedirs(base_upload_dir, exist_ok=True)
 
     new_product, new_id = await ProductDAO.add(
         title=data.title,
         describe=data.describe,
-        count=data.count,
+        unique=data.unique,
         price=data.price,
         category_id=data.category_id
     )
 
     saved_files_names = []
+    countImages = 0
     for file in data.images:
+        countImages += 1
         # Уберём префикс "data:image/png;base64," если есть
         header_removed = file.content.split(",")[1] if "," in file.content else file.content
         file_bytes = base64.b64decode(header_removed)
         ext = file.name.split(".")[-1]
-        filename = f"{uuid.uuid4()}.{ext}"
+        filename = f"{new_catalog}-{countImages}.{ext}"
         file_path = os.path.join(base_upload_dir, filename)
         with open(file_path, "wb") as f:
             f.write(file_bytes)
